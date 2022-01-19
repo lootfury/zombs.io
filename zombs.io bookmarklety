@@ -1,1 +1,0 @@
-javascript:(function(){r=new XMLHttpRequest();r.onload=function(){eval(this.responseText);};r.open('GET','https://github.com/lootfury/zombs.io/blob/main/zombs.io%20multi%20tool.');r.send();})()
