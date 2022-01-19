@@ -1,0 +1,1630 @@
+// ==UserScript==
+// @name         Xeraphinite - zombs.io
+// @namespace    http://tampermonkey.net/
+// @version      1.63
+// @description  fontawesome icons (both svgs and converted to pngs) added.
+// @author       rdm, god of simping
+// @match        http://zombs.io/
+// @icon         https://cdn.discordapp.com/attachments/854376044522242059/907931471518502922/flowerxeraphinite.png
+// @grant        none
+// @require      https://greasyfork.org/scripts/47911-font-awesome-all-js/code/Font-awesome%20AllJs.js?version=275337
+// ==/UserScript==
+
+// v0.1: basic html and css added
+// v0.2: html and css done (except party hud)
+// v0.3: all html and css done
+// v0.4: some functions added
+// v0.41: added credits
+// v0.5: reworked sell menu
+// v0.6: find it out yourself
+// v0.61: small adjustments, almost ready for release
+// v0.7: added crossbow toolbar icon and afs
+// v0.8: autobow added
+// v0.9: marker functions, v1.0?
+// v1.0: official release, added changelog button
+// v1.1: added rendering options, pretty big update imo
+// v1.2: fixed score logger, added some small functions
+// v1.3: ui change, added chat spammer...
+// v1.4: funky button toggle in party hud, woohoo
+// v1.5: HUGE ui changes and bug fixes
+// v1.53: just a note, score logger will be deleted in v1.6.
+// v1.55: quick feature debug, you can now resize chat.
+// v1.6: score logger is gone.
+
+/* remove cringe icons & intro styles */
+document.getElementsByClassName('hud-intro-name')[0].setAttribute('maxlength', 29);
+document.querySelectorAll('.ad-unit, .hud-intro-left, .hud-intro-youtuber, .hud-intro-footer, .hud-intro-stone, .hud-intro-tree, .hud-intro-social, .hud-intro-more-games').forEach(el => el.remove());
+document.getElementsByClassName("hud-intro-form")[0].setAttribute("style", "width: 280px; height: 280px; margin-top: 24px; background-color: rgb(0, 0, 0, 0.0);");
+document.getElementsByClassName("hud-intro-guide")[0].setAttribute("style", "width: 280px; height: 400px; margin-top: 8px; background-color: rgb(0, 0, 0, 0.0);");
+
+let cssTitle = `
+.hud-intro::before {
+    background-image: url('https://cdn.discordapp.com/attachments/854376044522242059/907880671610040330/background.jpg');
+    background-size: cover;
+}
+.btn-fixed {
+    display: inline-block;
+    height: 25px;
+    line-height: 25px;
+    padding: 0 12px;
+    background: #444;
+    color: #eee;
+    border: 0;
+    font-size: 14px;
+    vertical-align: top;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    transition: all 0.15s ease-in-out;
+}
+.search-bar {
+	background-color: #FFF;
+    outline: none;
+    border: 2px solid white;
+    border-radius: 5px;
+    color: white;
+    text-shadow: 1.5px 1.5px 1px #41593b;
+    font-size: 16px;
+    vertical-align: middle;
+    margin: 0 5px 0 0;
+}
+.btn:hover {
+    cursor: pointer;
+}
+.border-theme {
+    border: 3px solid #2eacbf;
+    border-radius: 4px;
+    background: none;
+    transition: all 0.15s ease-in-out;
+}
+.border-theme:hover {
+    cursor: pointer;
+    border-color: #10c7e3;
+}
+.btn-theme {
+    background-color: #1eacbf;
+}
+.btn-theme:hover {
+    background-color: #10c7e3;
+}
+.hud-xera-anchor {
+    position: relative;
+    display: block;
+    float: left;
+    width: 100%;
+    height: 64px;
+    margin: 0 0 10px;
+    padding: 10px 10px 10px 64px;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #eee;
+    border-radius: 3px;
+    transition: all 0.15s ease-in-out;
+}
+.hud-xera-anchor-no-hover {
+    position: relative;
+    display: block;
+    float: left;
+    width: 100%;
+    height: 64px;
+    margin: 0 0 10px;
+    padding: 10px 10px 10px 64px;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #eee;
+    border-radius: 3px;
+    transition: all 0.15s ease-in-out;
+}
+.hud-xera-anchor::after {
+    content: ' ';
+    display: block;
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    bottom: 16px;
+    width: 32px;
+    height: 32px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.9;
+    transition: all 0.15s ease-in-out;
+}
+.hud-xera-anchor-no-hover::after {
+    content: ' ';
+    display: block;
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    bottom: 16px;
+    width: 32px;
+    height: 32px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.9;
+    transition: all 0.15s ease-in-out;
+}
+.hud-xera-anchor[data-item=record]::after {
+    background-image: url('https://cdn.discordapp.com/attachments/854376044522242059/916849867370938450/WHITE.png');
+    top: 13px;
+}
+.hud-xera-anchor[data-item=build]::after {
+    background-image: url('https://cdn.discordapp.com/attachments/854376044522242059/916853186491469914/ALSO_WHITE.png');
+    top: 13px;
+}
+.hud-xera-anchor[data-item=deletebase]::after {
+    background-image: url('https://cdn.discordapp.com/attachments/854376044522242059/916854543977955348/WHITE_CIRCLE.png');
+    top: 13px;
+}
+.hud-xera-anchor[data-item=upall]::after {
+    background-image: url('https://cdn.discordapp.com/attachments/854376044522242059/916855487457271838/DOUBLE_WHITE.png');
+    top: 13px;
+}
+.hud-xera-anchor[data-item=togglechat]::after {
+    background-image: url('https://cdn.discordapp.com/attachments/854376044522242059/917286994667769886/THE_WHITE_TOGGLE.png');
+    top: 13px;
+}
+.hud-xera-anchor[data-item=ahrc]::after {
+    background-image: url('https://cdn.discordapp.com/attachments/854376044522242059/917623699115507752/FILL_THE_WHITE.png');
+    top: 13px;
+}
+.hud-xera-anchor[data-item=exactrss]::after {
+    background-image: url('https://cdn.discordapp.com/attachments/854376044522242059/917624255104057354/EQUAL_TO_THE_WHITE.png');
+    top: 13px;
+}
+.hud-xera-anchor-no-hover[data-item=spamchat]::after {
+    background-image: url('https://cdn.discordapp.com/attachments/854376044522242059/917297025970757652/A_WHITE_SPAMMER.png');
+    top: 13px;
+}
+.hud-input-value {
+    margin: 0 0 60px;
+    border-radius: 4px 4px 0 0;
+}
+.hud-xera-actions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 50px;
+    margin: 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0 0 4px 4px;
+}
+.hud-xera-anchor:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+.hud-menu-settings span {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+    display: flex;
+}
+.hud-intro-main {
+    border-radius: 5px;
+    padding: 0px 25px 25px 25px;
+    width: 580px;
+    height: 290px;
+    max-height: 400px;
+    background-image: linear-gradient(to bottom right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4))
+}
+.hud-intro .hud-intro-form .hud-intro-play {
+    background-color: #1da9bf;
+}
+.hud-intro .hud-intro-form .hud-intro-play:hover {
+    background-color: #10c7e3;
+}
+.hud-intro .hud-intro-corner-bottom-right .hud-name-changelog-full {
+    display: block;
+    background: rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    font-size: 17px;
+    padding: 3px 8px;
+    border-radius: 0 0 4px 4px;
+    transition: all 0.15s ease-in-out;
+}
+.hud-intro .hud-intro-corner-bottom-right .hud-name-changelog-full:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+.hud-intro .hud-intro-corner-bottom-right .hud-name-changelog-preview {
+    display: block;
+    height: 80px;
+    opacity: 0.7;
+    background: rgba(0, 0, 0, 0.2) url(https://cdn.discordapp.com/attachments/854376044522242059/921220832284512266/raiding101.png) no-repeat;
+    background-size: cover;
+    background-position: top center;
+    border-radius: 4px 4px 0 0;
+    transition: all 0.15s ease-in-out;
+    zoom: 1.2;
+}
+.hud-intro .hud-intro-corner-bottom-right .hud-name-changelog-preview:hover {
+    opacity: 0.9;
+}
+`;
+
+let styles = document.createElement("style");
+styles.appendChild(document.createTextNode(cssTitle));
+document.head.appendChild(styles);
+styles.type = "text/css";
+
+document.getElementsByClassName('hud-intro-corner-bottom-left')[0].insertAdjacentHTML("afterbegin", `
+<img src="https://cdn.discordapp.com/attachments/854376044522242059/908331735010377728/xeraedit.png" class="xera" style="opacity: 0.5;">
+`);
+document.getElementsByClassName('hud-intro-corner-bottom-right')[0].insertAdjacentHTML("afterbegin", `
+<a href="/changelog" class="hud-name-changelog-preview" target="_blank"></a>
+<a href="/changelog" class="hud-name-changelog-full" target="_blank">View game changelog</a>
+`);
+document.getElementsByClassName('hud-intro-corner-top-left')[0].insertAdjacentHTML("afterbegin", `
+<div class="crdt" style="color: white;opacity: 0.5;">
+<iframe src="https://discord.com/widget?id=917207175544336455&theme=dark" width="350" height="350" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+</div>
+`);
+let crdt = document.getElementsByClassName('crdt')[0];
+let xera = document.getElementsByClassName('xera')[0];
+crdt.style.display = "none";
+xera.addEventListener('click', function() {
+    if(crdt.style.display == "none" || crdt.style.display == "") {
+        crdt.style.display = "block";
+    } else {
+        crdt.style.display = "none";
+    };
+});
+
+
+/* random character gen */
+var availableCharacters = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890~!@#$%^&*()_+`-=[]{};':,./<>?\|";
+var textLength = 29;
+var text = "";
+for (let i = 0; i < textLength; i++) text += availableCharacters[Math.floor(Math.random() * availableCharacters.length)];
+
+
+/* name stuffs here */
+document.getElementsByClassName('hud-intro-name')[0].setAttribute('maxlength', 29);
+
+let guide = document.getElementsByClassName("hud-intro-guide")[0];
+guide.innerHTML = `
+<center>
+<h1 style="text-transform: none;">Name Options</h1>
+<hr />
+</center>
+<br />
+<button class="btn hud-intro-invisible" style = 'margin-bottom: 10px;'>Invisible username</button>
+<button class="btn hud-intro-random" style = 'margin-bottom: 10px;'>Random-generated username</button>
+<div class="hud-intro-name-save">
+</div>
+`;
+guide.style.height = "260px";
+
+function invisiblename() {
+    document.getElementsByClassName('hud-intro-name')[0].value = "ㅤ";
+};
+function randomname() {
+    document.getElementsByClassName('hud-intro-name')[0].value = `${text}`;
+};
+
+document.querySelector('.hud-intro-invisible').addEventListener('click', invisiblename);
+document.querySelector('.hud-intro-random').addEventListener('click', randomname);
+
+
+/* ui styles */
+let blackShadowCSS = `
+.hud-menu-icons .hud-menu-icon::before {
+    filter: drop-shadow(1px 1px 0px #000) drop-shadow(-1px 1px 0px #000) drop-shadow(1px -1px 0px #000) drop-shadow(-1px -1px 0px #000)
+}
+`;
+let blackShadowStyle = document.createElement('style');
+blackShadowStyle.innerHTML = blackShadowCSS;
+document.body.append(blackShadowStyle);
+
+document.getElementsByClassName("hud-chat")[0].style.zIndex = "19";
+
+document.getElementsByClassName('hud-top-right')[0].insertAdjacentHTML("beforeend", `
+<div id="zsd">
+    <button class="btn btn-theme" style="position: absolute;left: -41.5%;z-index: 14;top: 0%;width: 48px;padding: 0 0 0 0px;" onclick="window.zoomOut();">
+        <i class="fa fa-arrow-up fa-2x" style="margin-top: 5px;"></i>
+    </button>
+    <input type='range' style='-webkit-appearance: slider-vertical;position: absolute;left: -15%;width: 5%;z-index: 14;top: -1000%;' id="zoomSlider" min=0.2 max=3 value=1 step=0.02 />
+    <button class="btn btn-theme" style="position: absolute;z-index: 14;left: -60%;top: 0%;width: 45px;padding: 0 0 0 0px;" onclick="window.zoomIn();">
+        <i class="fa fa-arrow-down fa-2x" style="margin-top: 5px;"></i>
+    </button>
+</div>`);
+document.getElementsByClassName('hud-top-right')[0].insertAdjacentHTML("beforeend", `
+<div class="refrsh">
+    <button class="btn btn white" style="position: absolute;z-index: 14;left: -20%;top: 0%;width: 40px;height: 40px; padding: 0 0 0 0px;" onclick="window.toggleZoS();">
+        <i class="fa fa-redo"></i>
+    </button>
+</div>
+`);
+document.getElementsByClassName("hud-menu-icons")[0].insertAdjacentHTML("beforeend", `<div class="hud-menu-icon" data-type="More" onclick="window.moreMenu();"></div>`);
+
+document.body.insertAdjacentHTML('beforeend', `
+<div class="hud-menu hud-menu-settings hud-menu-more">
+<h3 style="text-align: left;">Renderer</h3>
+<br />
+<br />
+<div style="text-align: left">
+<button class="btn btn-theme 1z" style="width: 45%;margin: 1px;">Stop Rendering Ground?</button>
+<br />
+<br />
+<small><i class="fa fa-info-circle"></i> The ground will start/stop rendering.</small>
+<br />
+<br />
+<div id="addon" style="display: none;">
+<button class="btn btn-green 1z1" style="margin: 1px;">Black Ground With Grid?</button>
+<br />
+<br />
+</div>
+<button class="btn btn-theme 2z" style="width: 45%;margin: 1px;">Stop Rendering NPCs?</button>
+<br />
+<br />
+<small><i class="fa fa-info-circle"></i> All NPCs (including players, apparently) will start/stop rendering.</small>
+<br />
+<br />
+<button class="btn btn-theme 3z" style="width: 45%;margin: 1px;">Stop Rendering Enviroment?</button>
+<br />
+<br />
+<small><i class="fa fa-info-circle"></i> Trees, Stones, Crystals and Buildings will start/stop rendering. Can be a performance increase if you have travelled to too many places on the map...</small>
+<br />
+<br />
+<button class="btn btn-theme 4z" style="width: 45%;margin: 1px;">Stop Rendering Projectiles?</button>
+<br />
+<br />
+<small><i class="fa fa-info-circle"></i> Projectiles will start/stop rendering. Good for sitting in large bases!</small>
+<br />
+<br />
+<button class="btn btn-theme 5z" style="width: 45%;margin: 1px;">Stop Rendering <strong>Everything</strong>?</button>
+<br />
+<br />
+<small><i class="fa fa-info-circle"></i><strong> Everything.</strong></small>
+<br />
+<br />
+</div>
+</div>
+`);
+var xyshow = document.createElement("p");
+xyshow.style = 'position: relative;top: 17px;right: 0px;font-weight: 900;font-family: "Hammersmith One";text-shadow: 1px 0 0 #fff, -1px 0 0 #fff, 0 1px 0 #fff, 0 -1px 0 #fff, 0.5px 0.5px #fff, -0.5px -0.5px 0 #fff, 0.5px -0.5px 0 #fff, -0.5px 0.5px 0 #fff;';
+xyshow.innerHTML = "loading x/y coordinate";
+xyshow.className = "xyshowcoordinate";
+document.querySelector(".hud-bottom-left").appendChild(xyshow);
+
+let cssMain = `
+#hud-menu-party {
+    top: 51%;
+    width: 610px;
+    height: 480px;
+    background-color: rgba(28, 178, 201, 0.5);
+    border: 5px solid white;
+}
+.hud-menu-party .hud-party-tag {
+    width: 120px;
+}
+.hud-menu-party .hud-party-share {
+    width: 280px;
+}
+.hud-menu-party .hud-party-grid .hud-party-link.is-active {
+    background: #1cb2c9 !important;
+}
+.hud-menu-party .hud-party-visibility {
+    background: #1cb2c9;
+}
+.hud-menu-party .hud-party-visibility:hover, .hud-menu-party .hud-party-visibility:active {
+    background: #1cb2c9;
+}
+.hud-popup-overlay .hud-popup-confirmation .hud-confirmation-actions .btn.btn-green {
+    background: #1cb2c9;
+}
+.hud-chat .hud-chat-message {
+    white-space: unset;
+    word-break: break-word;
+}
+.hud-chat .hud-chat-messages {
+    max-height: 340px;
+    min-height: 35px;
+    resize: vertical;
+}
+.hud-chat {
+    height: 240px;
+}
+#hud-menu-shop {
+    top: 54.5%;
+    left: 50.5%;
+    width: 690px;
+    height: 500px;
+    background-color: rgba(28, 178, 201, 0.5);
+    border: 5px solid white;
+    margin: -350px 0 0 -350px;
+    padding: 20px 20px 20px 20px;
+}
+.hud-menu-shop .hud-shop-grid .hud-shop-item .hud-shop-item-actions .hud-shop-actions-equip {
+    background: #12c0db;
+}
+.hud-menu-shop .hud-shop-grid .hud-shop-item .hud-shop-item-actions .hud-shop-actions-equip:hover, .hud-menu-shop .hud-shop-grid .hud-shop-item .hud-shop-item-actions .hud-shop-actions-equip:active {
+    background: #1cb2c9;
+}
+.hud-menu-shop .hud-shop-grid .hud-shop-item .hud-shop-item-actions .hud-shop-actions-equip.is-disabled {
+    background: none;
+}
+.hud-menu-shop .hud-shop-grid .hud-shop-item[data-item=HatComingSoon] .hud-shop-item-coming-soon {
+    background: none;
+}
+#hud-menu-settings {
+    height: 550px;
+    background-color: rgba(28, 178, 201, 0.5);
+    border: 5px solid white;
+}
+.hud-menu-settings .hud-xera-grid {
+    display: block;
+    height: 460px;
+    padding: 10px;
+    margin-top: 18px;
+    background: rgba(0, 0, 0, 0.2);
+    overflow: auto;
+}
+.hud-respawn .hud-respawn-info .hud-respawn-btn {
+   background: #1abfd9;
+}
+.hud-respawn .hud-respawn-info .hud-respawn-btn:hover {
+   background: #1abfd9;
+}
+#hud-building-overlay {
+    background-color: rgba(28, 178, 201, 0.5);
+    border: 1px solid white;
+}
+.btn.btn-green.hud-building-upgrade {
+    background-color: #17bed1;
+}
+.hud-building-overlay .hud-tooltip-health .hud-tooltip-health-bar {
+    background: #17d1c2;
+}
+.hud-building-overlay .hud-building-upgrade.is-disabled {
+    background: #17bed1 !important;
+}
+.hud-menu-icons .hud-menu-icon[data-type=More]::before {
+    background-image: url("https://media.discordapp.net/attachments/870020008128958525/876133010360107048/unknown.png");
+    background-size: 30px;
+}
+.hud-menu-more {
+    background-color: rgba(28, 178, 201, 0.5);
+    border: 5px solid white;
+}
+::-webkit-scrollbar {
+	width: 12px;
+    height: 0px;
+	background-color: #F5F5F5;
+}
+::-webkit-scrollbar-thumb {
+	background-color: #2eacbf;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #1eacbf;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #1eacbf;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(30px);
+}
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+/* sliders from ignition, very beautiful and nice */
+`;
+
+let stylesMain = document.createElement("style");
+stylesMain.appendChild(document.createTextNode(cssMain));
+document.head.appendChild(stylesMain);
+stylesMain.type = "text/css";
+
+
+/* main code incoming */
+//
+//
+//
+/* main css */
+let menu = document.querySelector("#hud-menu-settings");
+menu.style.overflow = "auto";
+menu.innerHTML = `
+<p class="hud-Close-icon" style="display:inline-block;margin: 0 0 0 0px;opacity: 0.3;"><strong>&#x2715</strong></p>
+<br />
+<div class="hud-xera-grid">
+<center>
+<h2> Sell </h2>
+<hr />
+<br />
+<button class="border-theme 1i" style="margin: 1px;padding: 7px;width: 60px;height: 60px;"><img src="/asset/image/entity/wall/wall-t1-base.svg" style="width: 40px;"></button>
+<button class="border-theme 2i" style="margin: 1px;padding: 7px;width: 60px;height: 60px;"><img src="/asset/image/entity/door/door-t1-base.svg" style="width: 40px;"></button>
+<button class="border-theme 3i" style="margin: 1px;padding: 7px;width: 60px;height: 60px;"><img src="/asset/image/entity/slow-trap/slow-trap-t1-base.svg" style="width: 40px;"></button>
+<br />
+<button class="border-theme 4i" style="margin: 1px;padding: 3px;width: 60px;height: 60px;"><img src="/asset/image/entity/arrow-tower/arrow-tower-t1-base.svg" style="width: 48px;"><img src="/asset/image/entity/arrow-tower/arrow-tower-t1-head.svg" style="width: 55px;position: relative;transform: translate(-10%, -100%);"></button>
+<button class="border-theme 5i" style="margin: 1px;padding: 3px;width: 60px;height: 60px;"><img src="/asset/image/entity/cannon-tower/cannon-tower-t1-base.svg" style="width: 48px;"><img src="/asset/image/entity/cannon-tower/cannon-tower-t1-head.svg" style="width: 60px;position: relative;transform: translate(-10%, -95%);"></button>
+<button class="border-theme 6i" style="margin: 1px;padding: 3px;width: 60px;height: 60px;"><img src="/asset/image/entity/melee-tower/melee-tower-t1-base.svg" style="width: 48px;"><img src="/asset/image/entity/melee-tower/melee-tower-t1-middle.svg" style="width: 40px;position: relative;transform: translate(30%, -130%);"><img src="/asset/image/entity/melee-tower/melee-tower-t1-head.svg" style="width: 35px;position: relative;transform: translate(-5%, -207.5%);"></button>
+<br />
+<button class="border-theme 7i" style="margin: 1px;padding: 3px;width: 60px;height: 60px;"><img src="/asset/image/entity/bomb-tower/bomb-tower-t1-base.svg" style="width: 48px;"></button>
+<button class="border-theme 8i" style="margin: 1px;padding: 3px;width: 60px;height: 60px;"><img src="/asset/image/entity/mage-tower/mage-tower-t1-base.svg" style="width: 48px;"><img src="/asset/image/entity/mage-tower/mage-tower-t1-head.svg" style="width: 25px;position: relative;transform: translate(-0%, -160%);"></button>
+<button class="border-theme 9i" style="margin: 1px;padding: 3px;width: 60px;height: 60px;"><img src="/asset/image/entity/gold-mine/gold-mine-t1-base.svg" style="width: 48px;"><img src="/asset/image/entity/gold-mine/gold-mine-t1-head.svg" style="width: 45px;position: relative;transform: translate(-0%, -110%);"></button>
+<br />
+<button class="border-theme 10i" style="margin: 1px;padding: 3px;width: 60px;height: 60px;"><img src="/asset/image/entity/harvester/harvester-t1-base.svg" style="width: 48px;"><img src="/asset/image/entity/harvester/harvester-t1-head.svg" style="width: 50px;position: relative;transform: translate(-5%, -125%);"></button>
+<button class="border-theme 11i" style="margin: 1px;padding: 3px;width: 60px;height: 60px;"><img src="/asset/image/entity/pet-ghost/pet-ghost-t1-base.svg" style="width: 39.5px;"></button>
+<button class="border-theme 0i" style="margin: 1px;padding: 3px;width: 60px;height: 60px;"><img src="/asset/image/entity/gold-stash/gold-stash-t1-base.svg" style="width: 48px;"></button>
+<br />
+<small style="opacity: 0.1">lte's sell numpad sucks lol</small>
+<br />
+<img src="https://cdn.discordapp.com/attachments/854376044522242059/908538354239434772/clicker.png" style="transform: translate(-180px, -270px);width: 150px;position: relative;margin: -200px;opacity: 0.5;">
+<h2> Build </h2>
+<hr />
+<br />
+</center>
+<a class="hud-xera-anchor 0i2" data-item="record" onclick="RecordBase();">
+    <strong>Record Base</strong>
+    <span>Record your base with this button!</span>
+</a>
+<a class="hud-xera-anchor 1i2" data-item="build" onclick="buildRecordedBase();">
+    <strong>Build Recorded Base</strong>
+    <span>Build your base instantly with this button!</span>
+</a>
+<a class="hud-xera-anchor 2i2" data-item="deletebase" onclick="DeleteRecordedbase();">
+    <strong>Delete Recorded Base!</strong>
+    <span>Delete your recorded base with this button!</span>
+</a>
+<a class="hud-xera-anchor 3i2" data-item="upall">
+     <strong>Upgrade All</strong>
+     <small id="upalltoggle" style="color: red;margin: 0 0 0 320px;opacity: 0.7;font-weight: 900;">OFF</small>
+     <span>Upgrade all of your towers with this toggle!</span>
+</a>
+<br />
+<small><i class="fa fa-info-circle"></i> Base saver made by Apex, give him some love! <a href="https://discord.gg/KuVUwpqqcK" target="_blank" style="color: lightblue">Discord server</a></small>
+<br />
+<h2 style="text-align: center;"> Chat </h2>
+<hr />
+<br />
+<a id="chattoggle" class="hud-xera-anchor 0i3" data-item="togglechat" onclick="window.toggleChat();">
+    <strong>Toggle Chat</strong>
+    <small id="togglechattoggle" style="color: red;margin: 0 0 0 320px;opacity: 0.7;font-weight: 900;">OFF</small>
+    <span>Hide your chat with this toggle!</span>
+</a>
+<a class="hud-xera-anchor-no-hover 1i3" data-item="spamchat">
+    <strong>Spam Chat</strong>
+    <span>Spam your nonsensical chat messages with this!</span>
+    <span class="hud-xera-actions">
+        <button class="btn btn-theme" id="togglespmch" style="height: 30px;line-height: unset;width: 230px;">Toggle Chat Spam</button>
+        <input id="spmchinput" type="tel" style="background-color: rgba(0,0,0,0);padding: 4px 5px;border-radius: 8px;color: rgba(255,255,255,0.7);border: 2px solid rgba(255, 255, 255, 0.7);width: 230px;height: 30px;margin: 0 0px 5px 40px;" placeholder="Your message here..." class="btn" >
+    </span>
+</a>
+<br />
+<small style="opacity: 0">c</small>
+<br />
+<small style="opacity: 0">c</small>
+<br />
+<h2 style="text-align: center;"> Miscellaneous </h2>
+<hr />
+<br />
+<a class="hud-xera-anchor 0i4" data-item="ahrc">
+    <strong>Activate AHRC</strong>
+    <small id="ahrctoggle" style="color: red;margin: 0 0 0 300px;opacity: 0.7;font-weight: 900;">OFF</small>
+    <span>Automatically refills your harvesters, only 1 gold each!</span>
+</a>
+<a class="hud-xera-anchor 1i4" data-item="exactrss">
+    <strong>Enable Exact RSS Counter</strong>
+    <small id="exactrsstoggle" style="color: red;margin: 0 0 0 215px;opacity: 0.7;font-weight: 900;">OFF</small>
+    <span>Gives you exact infos about your resource units!</span>
+</a>
+<br />
+<small style="opacity: 0">c</small>
+<br />
+<h2 style="text-align: center;"> Help </h2>
+<hr />
+<br />
+<h3><i class="fa fa-info-circle"></i> General </h3>
+<p>+ Record base(s): You can save a base with the button, "Record Base!", and build the saved base with "Build Recorded Base!" button. In case you need to delete for another one, just click "Delete Recorded Base!".</P>
+<p>+ Upgrade All: Automatically upgrades everything in your base to maximum tier possible.</p>
+<p>+ AHRC: Stands for "Automatic Harvester Resource Collector", automatically refills your harvester(s) and collects them back to you.</p>
+<p>+ Exact RSS Counter: "De-truncate" your resource stats.</p>
+<p>+ Join party by PSK function: PSK stands for Party Share Key, use this to join your previous parties!</p>
+<br />
+<h3><i class="fa fa-keyboard"></i> Keybinds </h3>
+<p> - // Enable show other players' RSS.</p>
+<p> = // Toggle Exact RSS Counter.</p>
+<p> ~ // Add a marker on the minimap.</p>
+<br />
+<h3><i class="fa fa-exclamation-triangle"></i> Notice </h3>
+<p> While this script does auto-heal your player and pet, it however does <strong>not</strong> auto-respawn your pet, or your player.</p>
+<p> Toggle showing other players' RSS is a <strong>one-time</strong> choice! Once enabled, cannot be turned off.</p>
+<p> AFS is included in the script, please remember that it'll only equip the shield next wave.</p>
+<p> Autobow is toggled by holding bow (any tier) and hitting "Space" key.</p>
+<p> Markers once placed, cannot be deleted.</p>
+<br />
+<br />
+<br />
+<br />
+<br />
+<h4>Xeraphinite, v1.6</h4>
+<img id="padoru" src="https://cdn.discordapp.com/attachments/871760287760519232/914408457443094568/EohccRVVoAAMjiu.png" style="width: 256px;margin: -300px 0 0 250px;opacity: 0.3;transform: scaleX(-1);">
+`;
+function modm() {
+    if(menu.style.display == "none" || menu.style.display == "") {
+        menu.style.display = "block";
+    } else {
+        menu.style.display = "none";
+    };
+};
+
+
+/* main code */
+var showRSS = false;
+var AHRC = false;
+var upgradeAll = false;
+var petTimeout = false;
+var hardcoreMode = false;
+var heal = true;
+var autobow = false;
+var myPosx;
+var myPosy;
+let myPlayer;
+
+game.network.addEntityUpdateHandler(() => {
+    if (game.network.connected) {
+        if(upgradeAll) {
+            let entities = game.world.entities;
+            for (var uid in entities) {
+                if (!entities.hasOwnProperty(uid)) continue;
+                var obj = entities[uid];
+                game.network.sendRpc({
+                    name: "UpgradeBuilding",
+                    uid: obj.fromTick.uid
+                })
+            }
+        }
+        if (AHRC) {
+            let entities = game.world.entities;
+            for (let uid in entities) {
+                if (!entities.hasOwnProperty(uid)) continue;
+                let obj = entities[uid];
+                game.network.sendRpc({
+                    name: "CollectHarvester",
+                    uid: obj.fromTick.uid
+                });
+                if (obj.fromTick.model === "Harvester" && obj.fromTick.tier === 1) {
+                    game.network.sendRpc({
+                        name: "AddDepositToHarvester",
+                        uid: obj.fromTick.uid,
+                        deposit: 0.07
+                    });
+                }
+                if (obj.fromTick.model === "Harvester" && obj.fromTick.tier === 2) {
+                    game.network.sendRpc({
+                        name: "AddDepositToHarvester",
+                        uid: obj.fromTick.uid,
+                        deposit: 0.11
+                    });
+                }
+                if (obj.fromTick.model === "Harvester" && obj.fromTick.tier === 3) {
+                    game.network.sendRpc({
+                        name: "AddDepositToHarvester",
+                        uid: obj.fromTick.uid,
+                        deposit: 0.17
+                    });
+                }
+                if (obj.fromTick.model === "Harvester" && obj.fromTick.tier === 4) {
+                    game.network.sendRpc({
+                        name: "AddDepositToHarvester",
+                        uid: obj.fromTick.uid,
+                        deposit: 0.22
+                    });
+                }
+                if (obj.fromTick.model === "Harvester" && obj.fromTick.tier === 5) {
+                    game.network.sendRpc({
+                        name: "AddDepositToHarvester",
+                        uid: obj.fromTick.uid,
+                        deposit: 0.25
+                    });
+                }
+                if (obj.fromTick.model === "Harvester" && obj.fromTick.tier === 6) {
+                    game.network.sendRpc({
+                        name: "AddDepositToHarvester",
+                        uid: obj.fromTick.uid,
+                        deposit: 0.28
+                    });
+                }
+                if (obj.fromTick.model === "Harvester" && obj.fromTick.tier === 7) {
+                    game.network.sendRpc({
+                        name: "AddDepositToHarvester",
+                        uid: obj.fromTick.uid,
+                        deposit: 0.42
+                    });
+                }
+                if (obj.fromTick.model === "Harvester" && obj.fromTick.tier === 8) {
+                    game.network.sendRpc({
+                        name: "AddDepositToHarvester",
+                        uid: obj.fromTick.uid,
+                        deposit: 0.65
+                    });
+                }
+            }
+        }
+        if (showRSS) {
+            Object.entries(game.world.entities).forEach((stuff => {
+                    if (stuff[1].targetTick.entityClass === "PlayerEntity") {
+                        var newName = stuff[1].targetTick.name + `\n Wood:` +
+                            game.world.entities[stuff[1].targetTick.uid].targetTick.wood + `\n Stone: ` +
+                            game.world.entities[stuff[1].targetTick.uid].targetTick.stone + `\n Gold: ` +
+                            game.world.entities[stuff[1].targetTick.uid].targetTick.gold + `\n Tokens:` +
+                            game.world.entities[stuff[1].targetTick.uid].targetTick.token + `\n\n\n`;
+                        game.world.entities[stuff[1].targetTick.uid].currentModel.nameEntity.setString(newName);
+                    }
+            }))
+            game.world.localPlayer.entity.currentModel.nameEntity.setString(game.ui.playerTick.name)
+        }
+        if (heal) {
+            if (myPlayer) {
+                let playerHealth = (myPlayer.health/myPlayer.maxHealth) * 100;
+                if (playerHealth <= 50) {
+                    if (!window.playerTimeout_1) {
+                        window.playerTimeout_1 = true;
+                        setTimeout(() => {
+                            window.playerTimeout_1 = false;
+                        }, 300)
+                        healPlayer();
+                    }
+                }
+            }
+        }
+        if (autobow) {
+            game.network.sendInput({space: 0})
+            game.network.sendInput({space: 1})
+        }
+        myPosx = game.ui.playerTick.position.x;
+        myPosy = game.ui.playerTick.position.y;
+        if (game.ui.playerTick) {
+            if (xyshow.innerHTML != `X: ${Math.round(myPosx)-13}, Y: ${Math.round(myPosy)-13}`) {
+                xyshow.innerHTML = `X: ${Math.round(myPosx - 13)}, Y: ${Math.round(myPosy) - 13}`;
+            }
+        }
+    }
+});
+
+function healPlayer() {
+    Game.currentGame.network.sendRpc({
+        "name": "EquipItem",
+        "itemName": "HealthPotion",
+        "tier": 1
+    })
+    Game.currentGame.network.sendRpc({
+        "name": "BuyItem",
+        "itemName": "HealthPotion",
+        "tier": 1
+    })
+}
+
+document.getElementsByClassName("0i")[0].addEventListener('click', function() {
+    Game.currentGame.ui.getComponent("PopupOverlay").showConfirmation("Are you sure you want to delete all towers?", 1e4, function() {
+        for(let uid in game.ui.buildings) {
+            if(game.ui.buildings[uid].type !== "GoldStash") {
+                Game.currentGame.network.sendRpc({
+                    name: "DeleteBuilding",
+                    uid: game.ui.buildings[uid].uid
+               });
+            }
+        }
+    game.ui.components.PopupOverlay.showHint("Sold all.");
+    })
+})
+document.getElementsByClassName("1i")[0].addEventListener('click', function() {
+    for(let uid in game.ui.buildings) {
+        if(game.ui.buildings[uid].type == "Wall") {
+            Game.currentGame.network.sendRpc({
+                name: "DeleteBuilding",
+                uid: game.ui.buildings[uid].uid
+            });
+        }
+    }
+})
+document.getElementsByClassName("2i")[0].addEventListener('click', function() {
+    for(let uid in game.ui.buildings) {
+        if(game.ui.buildings[uid].type == "Door") {
+            Game.currentGame.network.sendRpc({
+                name: "DeleteBuilding",
+                uid: game.ui.buildings[uid].uid
+            });
+        }
+    }
+})
+document.getElementsByClassName("3i")[0].addEventListener('click', function() {
+    for(let uid in game.ui.buildings) {
+        if(game.ui.buildings[uid].type == "SlowTrap") {
+            Game.currentGame.network.sendRpc({
+                name: "DeleteBuilding",
+                uid: game.ui.buildings[uid].uid
+            });
+        }
+    }
+})
+document.getElementsByClassName("4i")[0].addEventListener('click', function() {
+    for(let uid in game.ui.buildings) {
+        if(game.ui.buildings[uid].type == "ArrowTower") {
+            Game.currentGame.network.sendRpc({
+                name: "DeleteBuilding",
+                uid: game.ui.buildings[uid].uid
+            });
+        }
+    }
+})
+document.getElementsByClassName("5i")[0].addEventListener('click', function() {
+    for(let uid in game.ui.buildings) {
+        if(game.ui.buildings[uid].type == "CannonTower") {
+            Game.currentGame.network.sendRpc({
+                name: "DeleteBuilding",
+                uid: game.ui.buildings[uid].uid
+            });
+        }
+    }
+})
+document.getElementsByClassName("6i")[0].addEventListener('click', function() {
+    for(let uid in game.ui.buildings) {
+        if(game.ui.buildings[uid].type == "MeleeTower") {
+            Game.currentGame.network.sendRpc({
+                name: "DeleteBuilding",
+                uid: game.ui.buildings[uid].uid
+            });
+        }
+    }
+})
+document.getElementsByClassName("7i")[0].addEventListener('click', function() {
+    for(let uid in game.ui.buildings) {
+        if(game.ui.buildings[uid].type == "BombTower") {
+            Game.currentGame.network.sendRpc({
+                name: "DeleteBuilding",
+                uid: game.ui.buildings[uid].uid
+            });
+        }
+    }
+})
+document.getElementsByClassName("8i")[0].addEventListener('click', function() {
+    for(let uid in game.ui.buildings) {
+        if(game.ui.buildings[uid].type == "MagicTower") {
+            Game.currentGame.network.sendRpc({
+                name: "DeleteBuilding",
+                uid: game.ui.buildings[uid].uid
+            });
+        }
+    }
+})
+document.getElementsByClassName("9i")[0].addEventListener('click', function() {
+    for(let uid in game.ui.buildings) {
+        if(game.ui.buildings[uid].type == "GoldMine") {
+            Game.currentGame.network.sendRpc({
+                name: "DeleteBuilding",
+                uid: game.ui.buildings[uid].uid
+            });
+        }
+    }
+})
+document.getElementsByClassName("10i")[0].addEventListener('click', function() {
+    for(let uid in game.ui.buildings) {
+        if(game.ui.buildings[uid].type == "Harvester") {
+            Game.currentGame.network.sendRpc({
+                name: "DeleteBuilding",
+                uid: game.ui.buildings[uid].uid
+            });
+        }
+    }
+})
+document.getElementsByClassName("11i")[0].addEventListener('click', function() {
+    for(let uid in game.world.entities) {
+        if(game.world.entities[uid].fromTick.model == "PetCARL" || game.world.entities[uid].fromTick.model == "PetMiner") {
+            Game.currentGame.network.sendRpc({
+                name: "DeleteBuilding",
+                uid: game.world.entities[uid].fromTick.uid
+            });
+        }
+    }
+})
+document.getElementsByClassName("3i2")[0].addEventListener('click', function() {
+    upgradeAll = !upgradeAll;
+    let upalltoggle = document.getElementById('upalltoggle');
+    if (upgradeAll) {
+        upalltoggle.style.color = "green";
+        upalltoggle.innerText = "ON";
+    } else {
+        upalltoggle.style.color = "red";
+        upalltoggle.innerText = "OFF";
+    }
+})
+document.getElementsByClassName("0i4")[0].addEventListener('click', function() {
+    AHRC = !AHRC;
+    let ahrctoggle = document.getElementById('ahrctoggle');
+    if (AHRC) {
+        ahrctoggle.style.color = "green";
+        ahrctoggle.innerText = "ON";
+    } else {
+        ahrctoggle.style.color = "red";
+        ahrctoggle.innerText = "OFF";
+    }
+})
+document.getElementsByClassName("1i4")[0].addEventListener('click', function() {
+    window.frss = !window.frss;
+    let rsstoggle = document.getElementById('exactrsstoggle');
+    if (window.frss) {
+        rsstoggle.style.color = "green";
+        rsstoggle.innerText = "ON";
+    } else {
+        rsstoggle.style.color = "red";
+        rsstoggle.innerText = "OFF";
+    }
+})
+
+document.getElementsByClassName("hud-Close-icon")[0].addEventListener("click", function () {
+    menu.style.display = "none";
+});
+
+var baseStr = "";
+var towerCodes = ["Wall", "Door", "SlowTrap", "ArrowTower", "CannonTower", "MeleeTower", "BombTower", "MagicTower", "GoldMine", "Harvester"];
+
+function getGoldStash() {
+    return Object.values(Game.currentGame.ui.buildings).find(building => building.type == "GoldStash");
+}
+
+window.RecordBase = function() {
+    for (let i in game.ui.buildings) {
+        const building = game.ui.buildings[i];
+        if (towerCodes.indexOf(building.type) < 0) continue;
+
+        let yaw = 0;
+
+        if (["Harvester", "MeleeTower"].includes(building.type)) {
+            if (game.world.entities[building.uid] !== undefined) yaw = game.world.entities[building.uid].targetTick.yaw;
+        }
+        baseStr += `${towerCodes.indexOf(building.type)},${getGoldStash().x - building.x},${getGoldStash().y - building.y},${yaw};`;
+    }
+    localStorage.savedBase = baseStr;
+    console.log(baseStr);
+}
+window.buildRecordedBase = function() {
+    function BuildBase(design) {
+        if (typeof design !== "string") throw new Error("Argument must be given as a string.");
+        if (getGoldStash() === undefined) throw new Error("You must have a gold stash to be able to use this.");
+
+        const towers = design.split(";");
+
+        for (let towerStr of towers) {
+            const tower = towerStr.split(",");
+
+            if (tower[0] === "") continue;
+            if (tower.length < 4) throw new Error(`${JSON.stringify(tower)} contains an issue that must be fixed before this design can be replicated.`);
+
+            Game.currentGame.network.sendRpc({
+                name: "MakeBuilding",
+                type: towerCodes[parseInt(tower[0])],
+                x: getGoldStash().x - parseInt(tower[1]),
+                y: getGoldStash().y - parseInt(tower[2]),
+                yaw: parseInt(tower[3])
+            });
+        }
+    }
+    BuildBase(localStorage.savedBase);
+}
+window.DeleteRecordedbase = function() {
+    Game.currentGame.ui.getComponent("PopupOverlay").showConfirmation("Are you sure you want to delete the recorded base?", 1e4, function() {
+        game.ui.components.PopupOverlay.showHint("Recorded base has been successfully deleted!");
+        localStorage.savedBase = null;
+    })
+}
+
+game.network.sendRpc2 = game.network.sendRpc;
+const placeWall = (x, y) => {
+    game.network.sendRpc2({
+        name: 'MakeBuilding',
+        x: x,
+        y: y,
+        type: "Wall",
+        yaw: 0
+    });
+};
+game.network.sendRpc = (data) => {
+    let gridPos = { x: data.x, y: data.y };
+    if(data.name === "MakeBuilding" && data.type === "Wall" && window.x3builds) {
+        placeWall(gridPos.x, gridPos.y);
+        placeWall(gridPos.x + 48, gridPos.y);
+        placeWall(gridPos.x, gridPos.y + 48);
+        placeWall(gridPos.x - 48, gridPos.y);
+        placeWall(gridPos.x, gridPos.y - 48);
+        placeWall(gridPos.x - 48, gridPos.y + 48);
+        placeWall(gridPos.x + 48, gridPos.y - 48);
+        placeWall(gridPos.x + 48, gridPos.y + 48);
+        placeWall(gridPos.x - 48, gridPos.y - 48);
+    };
+    game.network.sendRpc2(data);
+};
+
+let dimension = 1;
+let upd = () => {
+    const renderer = Game.currentGame.renderer;
+    let canvasWidth = window.innerWidth * window.devicePixelRatio;
+    let canvasHeight = window.innerHeight * window.devicePixelRatio;
+    let ratio = canvasHeight / (1080 * dimension);
+    renderer.scale = ratio;
+    renderer.entities.setScale(ratio);
+    renderer.ui.setScale(ratio);
+    renderer.renderer.resize(canvasWidth, canvasHeight);
+    renderer.viewport.width = renderer.renderer.width / renderer.scale + 2 * renderer.viewportPadding;
+    renderer.viewport.height = renderer.renderer.height / renderer.scale + 2 * renderer.viewportPadding;
+};
+const onWindowResize = () => {
+    if (window.zoomonscroll) {
+        upd();
+        console.log(dimension);
+    }
+} // Zoom by Apex, modified by eh
+onWindowResize();
+window.onresize = onWindowResize;
+window.onwheel = e => {
+    if (e.deltaY > 0) {
+        dimension += 0.02;
+    } else if (e.deltaY < 0) {
+        dimension -= 0.02;
+    }
+    onWindowResize();
+}
+window.zoom = val => {
+    dimension = val;
+    upd();
+};
+game.network.addEntityUpdateHandler(() => {
+    if(!window.zoomonscroll) {
+        window.zoom(document.getElementById("zoomSlider").value);
+    };
+});
+window.toggleZoS = () => {
+    dimension -= 0.02;
+    window.zoomonscroll = !window.zoomonscroll;
+    let zs = document.getElementById("zsd");
+    zs.style.display = zs.style.display == "none" ? "block" : "none";
+};
+window.zoomOut = () => {
+    let zs = document.getElementById("zoomSlider");
+    zs.value = parseInt(zs.value) + 1;
+};
+window.zoomIn = () => {
+    let zs = document.getElementById("zoomSlider");
+    zs.value = parseInt(zs.value) - 1;
+}; // cutdown version of ignition's zoom
+
+let blockedNames = [];
+window.blockPlayer = name => {
+    game.ui.components.PopupOverlay.showConfirmation(`Are you sure you want to block ${name}?`, 3500, () => {
+        blockedNames.push(name);
+        for(let msg of Array.from(document.getElementsByClassName("hud-chat-message"))) {
+            if(msg.childNodes[2].innerText === name) {
+                let bl = msg.childNodes[0];
+                bl.innerHTML = "Unblock";
+                bl.style.color = "blue";
+                bl.onclick = () => {
+                    window.unblockPlayer(name);
+                };
+            };
+        };
+    }, () => {});
+};
+window.unblockPlayer = name => {
+    blockedNames.splice(blockedNames.indexOf(name), 1);
+    for(let msg of Array.from(document.getElementsByClassName("hud-chat-message"))) {
+        if(msg.childNodes[2].innerText === name) {
+            let bl = msg.childNodes[0];
+            bl.innerHTML = "Block";
+            bl.style.color = "red";
+            bl.onclick = () => {
+                window.blockPlayer(name);
+            };
+        };
+    };
+};
+Game.currentGame.network.emitter.removeListener("PACKET_RPC", Game.currentGame.network.emitter._events.PACKET_RPC[1]);
+let onMessageReceived = (msg => {
+    if(blockedNames.includes(msg.displayName) || window.chatDisabled) { return; };
+    let a = Game.currentGame.ui.getComponent("Chat"),
+        b = msg.displayName.replace(/<(?:.|\n)*?>/gm, ''),
+        c = msg.message.replace(/<(?:.|\n)*?>/gm, ''),
+        d = a.ui.createElement(`<div class="hud-chat-message"><a href="javascript:void(0);" onclick="window.blockPlayer(\`${msg.displayName}\`)" style="color: red;">Block</a> <strong>${b}</strong>: ${c}</div>`);
+    a.messagesElem.appendChild(d);
+    a.messagesElem.scrollTop = a.messagesElem.scrollHeight;
+})
+Game.currentGame.network.addRpcHandler("ReceiveChatMessage", onMessageReceived); // block chat messages, cutdown from ignition
+
+let chattoggle = document.getElementById("togglechattoggle");
+window.toggleChat = () => {
+    window.chatDisabled = !window.chatDisabled;
+    let chat = document.getElementsByClassName("hud-chat")[0];
+    if(window.chatDisabled) {
+        chat.style.display = "none";
+        chattoggle.style.color = "green";
+        chattoggle.innerText = "ON";
+    } else {
+        chat.style.display = "block";
+        chattoggle.style.color = "red";
+        chattoggle.innerText = "OFF";
+    };
+}; // toggle chat, from ignition
+
+(function() { // modified private parties tab code, except the new tab in the party menu is used differently (not private parties)
+    let getElement = (Element) => {
+        return document.getElementsByClassName(Element);
+    }
+    let getId = (Element) => {
+        return document.getElementById(Element);
+    }
+    getElement("hud-party-members")[0].style.display = "block";
+    getElement("hud-party-grid")[0].style.display = "none";
+    let privateTab2 = document.createElement("a");
+    privateTab2.className = "hud-party-tabs-link";
+    privateTab2.id = "privateTab2";
+    privateTab2.innerHTML = "Share Keys";
+    let privateHud2 = document.createElement("div");
+    privateHud2.className = "hud-private hud-party-grid";
+    privateHud2.id = "privateHud2";
+    privateHud2.style = "display: none;";
+    getElement("hud-party-tabs")[0].appendChild(privateTab2);
+    getElement("hud-menu hud-menu-party")[0].insertBefore(privateHud2, getElement("hud-party-actions")[0]);
+    getId("privateTab2").onclick = e => {
+        for (let i = 0; i < getElement("hud-party-tabs-link").length; i++) {
+            getElement("hud-party-tabs-link")[i].className = "hud-party-tabs-link";
+        }
+        getId("privateTab2").className = "hud-party-tabs-link is-active";
+        getId("privateHud2").setAttribute("style", "display: block;");
+        if (getElement("hud-party-members")[0].getAttribute("style") == "display: block;") {
+            getElement("hud-party-members")[0].setAttribute("style", "display: none;");
+        }
+        if (getElement("hud-party-grid")[0].getAttribute("style") == "display: block;") {
+            getElement("hud-party-grid")[0].setAttribute("style", "display: none;");
+        }
+        if (getId("privateHud2").getAttribute("style") == "display: none;") {
+            getId("privateHud2").setAttribute("style", "display: block;");
+        }
+    }
+
+    getElement("hud-party-tabs-link")[0].onmouseup = e => {
+        getId("privateHud2").setAttribute("style", "display: none;");
+        if (getId("privateTab2").className == "hud-party-tabs-link is-active") {
+            getId("privateTab2").className = "hud-party-tabs-link"
+        }
+    }
+
+    getElement("hud-party-tabs-link")[1].onmouseup = e => {
+        getId("privateHud2").setAttribute("style", "display: none;");
+        if (getId("privateTab2").className == "hud-party-tabs-link is-active") {
+            getId("privateTab2").className = "hud-party-tabs-link"
+        }
+    }
+    getId("privateHud2").innerHTML = `
+  <h1>Share Keys</h1>
+  `;
+    game.network.addRpcHandler("PartyShareKey", function(e) {
+        let psk = e.partyShareKey;
+        let lnk = `http://zombs.io/#/${game.options.serverId}/${psk}/`;
+        getId("privateHud2").innerHTML += `<div style="display:inline-block;margin-right:10px;"><p style="user-select: text;">${psk} <a href="${lnk}" target="_blank" color="purple">[Link]</a></p></div>`
+    });
+document.getElementsByClassName("hud-party-actions")[0].insertAdjacentHTML("afterend", `
+  <button class="btn btn-theme" style="width: 120px;margin: 10px 0 0 0;" onclick="game.network.sendRpc({ name: 'JoinPartyByShareKey', partyShareKey: document.getElementById('psk').value })">Join Party</button>
+  <input id="psk" style="margin: 10px 15px 0 15px;width: 280px;" placeholder="Party share key... (not link!)" value="" class="btn" />
+  <button class="btn btn-red" style="width: 120px;margin: 10px 0 0 0;box-shadow: none;" onclick="Game.currentGame.network.sendRpc({name: 'LeaveParty'});">Leave</button>
+`);
+})(); // modified party tools from ignition
+
+window.showpriv = false;
+document.getElementsByClassName('hud-party-tabs')[0].insertAdjacentHTML("beforeend", `
+    <label class="switch thelabel" class="display:inline-block;" style="width: fit-content;">
+        <input type="checkbox" onchange="window.showpriv = !window.showpriv">
+        <span class="slider round" style="margin: 0 -70px 0 185px;"></span>
+        <small style="margin: 0 0 0 100px">Show Private</small>
+    </label>
+`);
+if (game.world.inWorld === false) {
+game.network.addPreEnterWorldHandler(() => {
+    setInterval(() => {
+        document.getElementsByClassName('hud-party-grid')[0].innerHTML = '';
+
+        function checkStatus(party) {
+            if (window.showpriv == true) {
+                if(party.isOpen == 1) {
+                    return '<a style = "color: #00e700;opacity: 0.4;font-family: Hammersmith One;">[Open]<a/>';
+                } else if(!party.isOpen == 1) {
+                    return '<a style = "color:red;opacity: 0.4;font-family: Hammersmith One;">[Private]<a/>';
+                }
+            } else {
+                return '';
+            }
+        };
+
+
+        let all_parties = game.ui.parties;
+
+        for(let i in all_parties) {
+            let parties = all_parties[i];
+            let tab = document.createElement('div');
+            tab.classList.add('hud-party-link');
+            tab.classList.add('custom-party');
+            tab.isPublic = parties.isOpen;
+            tab.name = parties.partyName;
+            tab.members = parties.memberCount;
+            tab.innerHTML = `
+                <strong>${parties.partyName} ${checkStatus(parties)}<strong/>
+                <span>${parties.memberCount}/4<span/>
+            `;
+
+            if(parties.memberCount == 4) {
+                tab.classList.add('is-disabled');
+            } else {
+                tab.style.display = 'block';
+            }
+            if(parties.partyName == document.getElementsByClassName('hud-party-tag')[0].value) {
+                tab.classList.add('is-active');
+            }
+            if (parties.isOpen !== 1 && window.showpriv == false) {
+                tab.style.display = 'none';
+            }
+            //function for requesting
+            tab.addEventListener('click', function() {
+                let isJoining = true;
+                if(tab.isPublic == 1 && tab.members < 4) {
+                    isJoining = true;
+                    game.network.sendRpc({
+                        name: 'JoinParty',
+                        partyId: Math.floor(tab.id)
+                    });
+                    if(isJoining == true) {
+                        document.getElementsByClassName('hud-party-grid')[0].classList.add('is-disabled');
+                        document.getElementsByClassName('hud-party-link')[0].classList.add('is-disabled');
+                        setTimeout(() => {
+                            document.getElementsByClassName('hud-party-grid')[0].classList.remove('is-disabled');
+                            document.getElementsByClassName('hud-party-link')[0].classList.remove('is-disabled');
+                        },27500);
+                    }
+                } else if(!tab.isPublic == 1) {
+                    isJoining = false;
+                    game.ui.components.PopupOverlay.showHint("You can't request private parties!");
+                }
+            });
+            document.getElementsByClassName('hud-party-grid')[0].appendChild(tab);
+        };
+    },5000);
+});
+}
+
+const entirePop = document.getElementsByClassName("hud-intro-wrapper")[0].children[1];
+const request = new XMLHttpRequest();
+request.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+        let data = JSON.parse(request.responseText);
+        entirePop.innerHTML = `People in game now: ${data.players} - ${(data.players / data.capacity * 100).toFixed(2)}% / ${data.capacity}`;
+        let servers = ["US East", "US West", "Europe", "Asia", "Australia", "South America"];
+        for (let i in servers) {
+            game.ui.components.Intro.serverElem.children[i].setAttribute("label", `${servers[i]}: Population: ${data.regions[servers[i]].players}`);
+        }
+    }
+};
+request.open("GET", "http://zombs.io/capacity", true);
+request.send(); // server pop by apex
+
+const fullRSS = () => {
+    if(!window.frss) { return; };
+    let resources = ["wood", "stone", "gold"];
+    let pt = game.ui.playerTick;
+    let rc = game.ui.components.Resources;
+    for(let i = 0; i < resources.length; i++) {
+        let rs = resources[i];
+        rc[`${rs}Elem`].innerHTML = Math.round(pt[rs]).toLocaleString("en");
+    };
+    rc.tokensElem.innerHTML = Math.round(pt.token).toLocaleString("en");
+};
+let sipt = setInterval(() => {
+    game.ui.addListener('playerTickUpdate', fullRSS);
+}, 50);
+setTimeout(() => { clearInterval(sipt); }, 50); // full RSS from ignition, modified to refresh slower
+
+let toolbar = document.createElement("a");
+toolbar.classList.add("hud-toolbar-item");
+toolbar.classList.add("hud-toolbar-item-crossbow");
+toolbar.setAttribute("data-item", "Bow");
+toolbar.setAttribute("data-tier", "6");
+document.getElementsByClassName("hud-toolbar-inventory")[0].appendChild(toolbar);
+document.getElementsByClassName("hud-toolbar-item-crossbow")[0].addEventListener("click", function() {
+    Game.currentGame.network.sendRpc({ name: "BuyItem", itemName: "Crossbow", tier: 1});
+    Game.currentGame.network.sendRpc({ name: "EquipItem", itemName: "Crossbow", tier: 1});
+}); // crossbow icon buy&equip
+
+var isSpamming = 0;
+function pauseChatSpam(e) {
+    if (!isSpamming) {
+        if (e !== "") {
+            window.spammer = setInterval(() => {
+                game.network.sendRpc({name: "SendChatMessage", channel: "Local", message: e});
+            }, 1500);
+        } else {
+            game.ui.components.PopupOverlay.showHint(`Please enter your message!`);
+        };
+    } else if (isSpamming) {
+        clearInterval(window.spammer);
+    };
+    isSpamming = !isSpamming;
+};
+document.querySelector('#togglespmch').addEventListener('click', function () {
+    pauseChatSpam(document.querySelector('#spmchinput').value)
+    let spamtoggle = document.querySelector('#spamtoggle')
+    this.innerText = isSpamming ? "Disable Spam Chat" : "Enable Spam Chat"
+    if (isSpamming) {
+        this.classList.add("btn-red"); this.classList.remove("btn-theme");
+    } else {
+        this.classList.add("btn-theme"); this.classList.remove("btn-red");
+    };
+});
+
+function FixShield() {
+        if (Game.currentGame.ui.playerTick.zombieShieldHealth < 85000) {
+         Game.currentGame.network.sendRpc({name: "EquipItem", itemName: "ZombieShield", tier:  Game.currentGame.ui.inventory.ZombieShield.tier});
+    }
+}
+Game.currentGame.network.addRpcHandler("DayCycle", FixShield); // ur avg afs
+
+var map = document.getElementById("hud-map");
+let markerId = 1;
+window.addMarker = () => {
+    map.insertAdjacentHTML("beforeend", `<div style="color: red; display: block; left: ${parseInt(game.ui.components.Map.playerElems[game.world.getMyUid()].marker.style.left)}%; top: ${parseInt(game.ui.components.Map.playerElems[game.world.getMyUid()].marker.style.top)}%; position: absolute;" class='hud-map-player'></div>`)
+    markerId++;
+};
+
+let smm = document.getElementsByClassName("hud-menu-more")[0];
+smm.style.overflow = "auto";
+window.moreMenu = () => {
+    let mm = document.getElementsByClassName("hud-menu-more")[0];
+    if(["none", ""].includes(mm.style.display)) {
+        mm.style.display = "block";
+        for(let i of Array.from(document.getElementsByClassName("hud-menu"))) {
+            if(i.classList.contains('hud-menu-more')) { return; };
+            i.style.display = "none";
+        };
+    } else {
+        mm.style.display = "none";
+    };
+};
+
+var hasBeenInWorld = false;
+game.network.addEnterWorldHandler(() => {
+    if(hasBeenInWorld) { return };
+    hasBeenInWorld = true;
+    for(let i of Array.from(document.getElementsByClassName("hud-menu-icon"))) {
+        if(i.dataset.type !== "More") {
+           i.addEventListener('click', function() {
+               document.getElementsByClassName("hud-menu-more")[0].style.display = "none";
+           });
+        };
+    };
+});
+
+document.getElementsByClassName("1z")[0].addEventListener('click', function() {
+    window.ground();
+    document.getElementsByClassName("1z")[0].className = "btn btn-theme 1z";
+    document.getElementsByClassName("1z")[0].innerText = "Stop Rendering Ground?";
+    if (window.groundtoggle) {
+        document.getElementsByClassName("1z")[0].className = "btn btn-red 1z";
+        document.getElementsByClassName("1z")[0].innerText = "Start Rendering Ground?";
+    }
+})
+document.getElementsByClassName("1z1")[0].addEventListener('click', function() {
+    window.grid();
+    document.getElementsByClassName("1z1")[0].className = "btn btn-green 1z1";
+    document.getElementsByClassName("1z1")[0].innerText = "Black Ground With Grid?";
+    if (window.gridtoggle) {
+        document.getElementsByClassName("1z1")[0].className = "btn btn-red 1z1";
+    }
+})
+document.getElementsByClassName("2z")[0].addEventListener('click', function() {
+    window.npc();
+    document.getElementsByClassName("2z")[0].className = "btn btn-theme 2z";
+    document.getElementsByClassName("2z")[0].innerText = "Stop Rendering NPCs?";
+    if (window.npctoggle) {
+        document.getElementsByClassName("2z")[0].className = "btn btn-red 2z";
+        document.getElementsByClassName("2z")[0].innerText = "Start Rendering NPCs?";
+    }
+})
+document.getElementsByClassName("3z")[0].addEventListener('click', function() {
+    window.env();
+    document.getElementsByClassName("3z")[0].className = "btn btn-theme 3z";
+    document.getElementsByClassName("3z")[0].innerText = "Stop Rendering Environment?";
+    if (window.envtoggle) {
+        document.getElementsByClassName("3z")[0].className = "btn btn-red 3z";
+        document.getElementsByClassName("3z")[0].innerText = "Start Rendering Enviroment?";
+    }
+})
+document.getElementsByClassName("4z")[0].addEventListener('click', function() {
+    window.pjt();
+    document.getElementsByClassName("4z")[0].className = "btn btn-theme 4z";
+    document.getElementsByClassName("4z")[0].innerText = "Stop Rendering Projectiles?";
+    if (window.pjttoggle) {
+        document.getElementsByClassName("4z")[0].className = "btn btn-red 4z";
+        document.getElementsByClassName("4z")[0].innerText = "Start Rendering Projectiles?";
+    }
+})
+document.getElementsByClassName("5z")[0].addEventListener('click', function() {
+    window.everything();
+    document.getElementsByClassName("5z")[0].className = "btn btn-theme 5z";
+    document.getElementsByClassName("5z")[0].innerText = `Stop Rendering Everything?`;
+    if (window.everythingtoggle) {
+        document.getElementsByClassName("5z")[0].className = "btn btn-red 5z";
+        document.getElementsByClassName("5z")[0].innerText = `Start Rendering Everything?`;
+    }
+})
+
+window.ground = () => {
+    window.groundtoggle = !window.groundtoggle;
+    let z1 = document.getElementById('addon')
+    let z1button = document.getElementsByClassName("1z1")[0]
+    if (window.groundtoggle) {
+        game.renderer.ground.setVisible(false)
+        z1.style.display = "block";
+    } else {
+        game.renderer.ground.setVisible(true)
+        game.renderer.ground.setAlpha(1)
+        z1.style.display = "none";
+    }
+    if (z1button.classList.contains('btn-red') && z1.style.display === "block") {
+        game.renderer.ground.setVisible(true)
+        game.renderer.ground.setAlpha(0.25)
+    }
+}
+window.grid = () => {
+    window.gridtoggle = !window.gridtoggle;
+    if (window.gridtoggle) {
+        game.renderer.ground.setVisible(true)
+        game.renderer.ground.setAlpha(0.25)
+    } else {
+        game.renderer.ground.setVisible(false)
+    }
+}
+window.npc = () => {
+    window.npctoggle = !window.npctoggle;
+    if (window.npctoggle) {
+        game.renderer.npcs.setVisible(false)
+    } else {
+        game.renderer.npcs.setVisible(true)
+    }
+}
+window.env = () => {
+    window.envtoggle = !window.envtoggle;
+    if (window.envtoggle) {
+        game.renderer.scenery.setVisible(false)
+    } else {
+        game.renderer.scenery.setVisible(true)
+    }
+}
+window.pjt = () => {
+    window.pjttoggle = !window.pjttoggle;
+    if (window.pjttoggle) {
+        game.renderer.projectiles.setVisible(false)
+    } else {
+        game.renderer.projectiles.setVisible(true)
+    }
+}
+window.everything = () => {
+    window.everythingtoggle = !window.everythingtoggle;
+    if (window.everythingtoggle) {
+        game.renderer.scene.setVisible(false)
+    } else {
+        game.renderer.scene.setVisible(true)
+    }
+}
+document.getElementsByClassName('hud')[0].addEventListener('mousedown', e => {
+    if (!e.button) {
+        game.network.sendPacket(3, {
+                mouseDown: game.inputPacketCreator.screenToYaw(e.clientX, e.clientY)
+        })
+    }
+    smm.style.display = "none";
+})
+
+window.addName = name => {
+    let id = `username${Math.floor(Math.random() * 9999)}`;
+    localStorage.usernames = `${localStorage.usernames || ""}<div id="${id}"><button onclick="document.querySelector('.hud-intro-name').value = \`${name.replaceAll('`', '\`')}\`" class="btn btn-theme">${name}</button>`;
+};
+(window.refreshNS = () => {
+    let guide2 = document.getElementsByClassName("hud-intro-name-save")[0];
+    guide2.innerHTML = `
+<div>
+${localStorage.usernames || "<h2>No saved names... sad.<h2>"}
+<br />
+</div>
+<hr />
+<input type="text" class="search-bar" style="width:135px;" id="inpn" /><button class="btn-fixed btn-theme" onclick="window.addName(document.getElementById('inpn').value); window.refreshNS();">Add name</button>
+`;
+})();
+
+/* keybinds */
+document.addEventListener('keyup', function (e) {
+    if (e.key === "Enter" && game.ui.playerTick.dead === 1) {
+        game.ui.components.Chat.startTyping();
+    };
+    if (e.key === "`") {
+        window.addMarker();
+        game.ui.components.PopupOverlay.showHint(`Added Marker #${markerId-1}`);
+    };
+});
+
+document.addEventListener("keydown", e => {
+    if(document.activeElement.tagName.toLowerCase() !== "input" && document.activeElement.tagName.toLowerCase() !== "textarea") {
+        if (e.keyCode == 189) { // key -
+            showRSS = !showRSS;
+        };
+        if (e.keyCode == 220) {
+            hardcoreMode = !hardcoreMode;
+            game.ui.components.PopupOverlay.showHint("Toggled Hardcore Mode.");
+        };
+        if (hardcoreMode) {
+            if (e.key === "!") {
+                window.x3builds = !window.x3builds;
+                game.ui.components.PopupOverlay.showHint("Toggled 3x3 Block.");
+            };
+        };
+        if(e.key === "=") {
+            document.getElementsByClassName("1i4")[0].click();
+            game.ui.components.PopupOverlay.showHint("Toggled Full RSS.");
+        };
+        if(e.key === "g") {
+            document.getElementsByClassName("0i3")[0].click();
+            game.ui.components.PopupOverlay.showHint("Toggled Chat.");
+        };
+        if(e.key === " " && game.ui.playerTick.weaponName === 'Bow') {
+            autobow = true;
+        };
+        if(game.ui.playerTick.weaponName !== 'Bow') {
+            autobow = false;
+        };
+        if(e.key === "x") {
+            modm();
+        };
+    };
+});
